@@ -13,138 +13,172 @@ Parameters:
 	  This stored procedure does not accept any parameters or return any values.
 
 Usage Example:
-    EXEC bronze.load_bronze;
+    CALL bronze.load_bronze();
 ===============================================================================
 */
 
-CREATE OR ALTER PROCEDURE bronze.load_bronze AS
-BEGIN
-	DECLARE @start_time DATETIME,
-			@end_time DATETIME,
-			@batch_start_time DATETIME,
-			@batch_end_time DATETIME;
-	BEGIN TRY
-		SET @batch_start_time = GETDATE();
-		PRINT '=================================================';
-		PRINT 'Loading Bronze Layer';
-		PRINT '=================================================';
+CREATE OR REPLACE PROCEDURE bronze.load_bronze()
+LANGUAGE plpgsql
+AS $body$
+DECLARE
+    current_table TEXT;
+    batch_start_time TIMESTAMP;
+    start_time TIMESTAMP;
+    end_time TIMESTAMP;
+    batch_end_time TIMESTAMP;
+    duration INTERVAL;
+    
+    BEGIN
+        batch_start_time:= clock_timestamp();
 
-		PRINT '-------------------------------------------------';
-		PRINT 'Loading CRM Tables';
-		PRINT '-------------------------------------------------';
+        RAISE NOTICE '==========================================';
+        RAISE NOTICE 'Loading Bronze Layer';
+        RAISE NOTICE '===========================================';
 
-		SET @start_time = GETDATE()
-		PRINT '>> Truncating Table: bronze.crm_cust_info';
-		TRUNCATE TABLE bronze.crm_cust_info
+        RAISE NOTICE '--------------------------------------------';
+        RAISE NOTICE 'Loading CRM Tables';
+        RAISE NOTICE '--------------------------------------------';
 
-		PRINT '>> Inserting Data Into: bronze.crm_cust_info';
-		BULK INSERT bronze.crm_cust_info
-		FROM 'C:\Users\DELL USER\Documents\Sql Projects\sql-data-warehouse-project\datasets\source_crm\cust_info.csv'
-		WITH (
-			FIRSTROW = 2,
-			FIELDTERMINATOR = ',',
-			TABLOCK
-		);
-		SET @end_time = GETDATE()
-		PRINT '>> Load Duration: ' + CAST(DATEDIFF(second, @start_time, @end_time) AS NVARCHAR) + ' seconds';
-		PRINT '>> -----------------------------------'
+        start_time := clock_timestamp();
+        current_table := 'bronze.crm_cust_info';
+        RAISE NOTICE '>> Truncating Table: %', current_table;
+        --TRUNCATE TABLE current_table;
+        EXECUTE format('TRUNCATE TABLE %s', current_table);
 
-		SET @start_time = GETDATE()
-		PRINT '>> Truncating Table: bronze.crm_prd_info';
-		TRUNCATE TABLE bronze.crm_prd_info
+        RAISE NOTICE '>> Inserting data into: %', current_table;
+        COPY bronze.crm_cust_info
+        FROM 'C:\Users\Public\Documents\SQL projects\sql-data-warehouse-project\datasets\source_crm\cust_info.csv'
+        WITH(
+            FORMAT CSV, 
+            DELIMITER ',', 
+            HEADER
+        );
+        end_time := clock_timestamp();
+        duration := end_time - start_time;
+        RAISE NOTICE 'successfully loaded %', current_table;
+        RAISE NOTICE 'Load duration: %', duration;
+        RAISE NOTICE '------------------------------------------------';
+        RAISE NOTICE '------------------------------------------------';
 
-		PRINT '>> Inserting Data Into: bronze.crm_prd_info';
-		BULK INSERT bronze.crm_prd_info
-		FROM 'C:\Users\DELL USER\Documents\Sql Projects\sql-data-warehouse-project\datasets\source_crm\prd_info.csv'
-		WITH (
-			FIRSTROW = 2,
-			FIELDTERMINATOR = ',',
-			TABLOCK
-		);
-		SET @end_time = GETDATE()
-		PRINT '>> Load Duration: ' + CAST(DATEDIFF(second, @start_time, @end_time) AS NVARCHAR) + ' seconds';
-		PRINT '>> -----------------------------------'
+        start_time := clock_timestamp();
+        current_table := 'bronze.crm_prd_info';
+        RAISE NOTICE '>> Truncating Table: %', current_table;
+        --TRUNCATE TABLE current_table;
+        EXECUTE format('TRUNCATE TABLE %s', current_table);
 
-		SET @start_time = GETDATE()
-		PRINT '>> Truncating Table: bronze.crm_sales_details';
-		TRUNCATE TABLE bronze.crm_sales_details
+        RAISE NOTICE '>> Inserting data into: %', current_table;
+        COPY bronze.crm_prd_info
+        FROM 'C:\Users\Public\Documents\SQL projects\sql-data-warehouse-project\datasets\source_crm\prd_info.csv'
+        WITH(
+            FORMAT CSV, 
+            DELIMITER ',', 
+            HEADER
+        );
+        end_time := clock_timestamp();
+        duration := end_time - start_time;
+        RAISE NOTICE 'successfully loaded %', current_table;
+        RAISE NOTICE 'Load duration: %', duration;
+        RAISE NOTICE '------------------------------------------------';
+        RAISE NOTICE '------------------------------------------------';
 
-		PRINT '>> Inserting Data Into: bronze.crm_sales_details';
-		BULK INSERT bronze.crm_sales_details
-		FROM 'C:\Users\DELL USER\Documents\Sql Projects\sql-data-warehouse-project\datasets\source_crm\sales_details.csv'
-		WITH (
-			FIRSTROW = 2,
-			FIELDTERMINATOR = ',',
-			TABLOCK
-		);
-		SET @end_time = GETDATE()
-		PRINT '>> Load Duration: ' + CAST(DATEDIFF(second, @start_time, @end_time) AS NVARCHAR) + ' seconds';
 
-		PRINT '-------------------------------------------------';
-		PRINT 'Loading ERP Tables';
-		PRINT '-------------------------------------------------';
+        start_time := clock_timestamp();
+        current_table := 'bronze.crm_sales_details';
+        RAISE NOTICE '>> Truncating Table: %', current_table;
+        --TRUNCATE TABLE current_table;
+        EXECUTE format('TRUNCATE TABLE %s', current_table);
 
-		SET @start_time = GETDATE()
-		PRINT '>> Truncating Table: bronze.erp_cust_az12';
-		TRUNCATE TABLE bronze.erp_cust_az12
-	
-		PRINT '>> Inserting Data Into: bronze.erp_cust_az12';
-		BULK INSERT bronze.erp_cust_az12
-		FROM 'C:\Users\DELL USER\Documents\Sql Projects\sql-data-warehouse-project\datasets\source_erp\cust_az12.csv'
-		WITH (
-			FIRSTROW = 2,
-			FIELDTERMINATOR = ',',
-			TABLOCK
-		);
-		SET @end_time = GETDATE()
-		PRINT '>> Load Duration: ' + CAST(DATEDIFF(second, @start_time, @end_time) AS NVARCHAR) + ' seconds';
-		PRINT '>> -----------------------------------'
+        RAISE NOTICE '>> Inserting data into: %', current_table;
+        COPY bronze.crm_sales_details
+        FROM 'C:\Users\Public\Documents\SQL projects\sql-data-warehouse-project\datasets\source_crm\sales_details.csv'
+        WITH(
+            FORMAT CSV, 
+            DELIMITER ',', 
+            HEADER
+        );
+        end_time := clock_timestamp();
+        duration := end_time - start_time;
+        RAISE NOTICE 'successfully loaded %', current_table;
+        RAISE NOTICE 'Load duration: %', duration;
 
-		SET @start_time = GETDATE()
-		PRINT '>> Truncating Table: bronze.erp_loc_a101';
-		TRUNCATE TABLE bronze.erp_loc_a101
+        RAISE NOTICE '--------------------------------------------';
+        RAISE NOTICE 'Loading ERP Tables';
+        RAISE NOTICE '--------------------------------------------';
 
-		PRINT '>> Inserting Data Into: bronze.erp_loc_a101';
-		BULK INSERT bronze.erp_loc_a101
-		FROM 'C:\Users\DELL USER\Documents\Sql Projects\sql-data-warehouse-project\datasets\source_erp\loc_a101.csv'
-		WITH (
-			FIRSTROW = 2,
-			FIELDTERMINATOR = ',',
-			TABLOCK
-		);
-		SET @end_time = GETDATE()
-		PRINT '>> Load Duration: ' + CAST(DATEDIFF(second, @start_time, @end_time) AS NVARCHAR) + ' seconds';
-		PRINT '>> -----------------------------------'
+        start_time := clock_timestamp();
+        current_table := 'bronze.erp_loc_a101';
+        RAISE NOTICE '>> Truncating Table: %', current_table;
+        --TRUNCATE TABLE current_table;
+        EXECUTE format('TRUNCATE TABLE %s', current_table);
 
-		SET @start_time = GETDATE()
-		PRINT '>> Truncating Table: bronze.erp_px_cat_g1v2';
-		TRUNCATE TABLE bronze.erp_px_cat_g1v2
+        RAISE NOTICE '>> Inserting data into: %', current_table;
+        COPY bronze.erp_loc_a101
+        FROM 'C:\Users\Public\Documents\SQL projects\sql-data-warehouse-project\datasets\source_erp\LOC_A101.csv'
+        WITH(
+            FORMAT CSV, 
+            DELIMITER ',', 
+            HEADER
+        );
+        end_time := clock_timestamp();
+        duration := end_time - start_time;
+        RAISE NOTICE 'successfully loaded %', current_table;
+        RAISE NOTICE 'Load duration: %', duration;
+        RAISE NOTICE '------------------------------------------------';
+        RAISE NOTICE '------------------------------------------------';
 
-		PRINT '>> Inserting Data Into: bronze.erp_px_cat_g1v2';
-		BULK INSERT bronze.erp_px_cat_g1v2
-		FROM 'C:\Users\DELL USER\Documents\Sql Projects\sql-data-warehouse-project\datasets\source_erp\px_cat_g1v2.csv'
-		WITH (
-			FIRSTROW = 2,
-			FIELDTERMINATOR = ',',
-			TABLOCK
-		);
-		SET @end_time = GETDATE()
-		PRINT '>> Load Duration: ' + CAST(DATEDIFF(second, @start_time, @end_time) AS NVARCHAR) + ' seconds';
-		PRINT '>> --------------------------------'
+        start_time := clock_timestamp();
+        current_table := 'bronze.erp_px_cat_giv2';
+        RAISE NOTICE '>> Truncating Table: %', current_table;
+        --TRUNCATE TABLE current_table;
+        EXECUTE format('TRUNCATE TABLE %s', current_table);
 
-		SET @batch_end_time = GETDATE();
-		PRINT '============================================================'
-		PRINT 'Loading Bronze Layer is Completed';
-		PRINT '  - Total Load Duration: ' + CAST(DATEDIFF(second, @batch_start_time, @batch_end_time) AS NVARCHAR) + ' seconds';
-		PRINT '============================================================'
+        RAISE NOTICE '>> Inserting data into: %', current_table;
+        COPY bronze.erp_px_cat_giv2
+        FROM 'C:\Users\Public\Documents\SQL projects\sql-data-warehouse-project\datasets\source_erp\PX_CAT_G1V2.csv'
+        WITH(
+            FORMAT CSV, 
+            DELIMITER ',', 
+            HEADER
+        );
+        end_time := clock_timestamp();
+        duration := end_time - start_time;
+        RAISE NOTICE 'successfully loaded %', current_table;
+        RAISE NOTICE 'Load duration: %', duration;
+        RAISE NOTICE '------------------------------------------------';
+        RAISE NOTICE '------------------------------------------------';
 
-	END TRY
-	BEGIN CATCH
-		PRINT '============================================================'
-		PRINT 'ERROR OCCURED DURING LOADING BRONZE LAYER'
-		PRINT 'Error Message' + ERROR_MESSAGE();
-		PRINT 'Error Message' + CAST (ERROR_MESSAGE() AS NVARCHAR);
-		PRINT 'Error Message' + CAST (ERROR_STATE() AS NVARCHAR);
-		PRINT '============================================================'
-	END CATCH
-END
+        start_time := clock_timestamp();
+        current_table := 'bronze.erp_ust_az12';
+        RAISE NOTICE '>> Truncating Table: %', current_table;
+        --TRUNCATE TABLE current_table;
+        EXECUTE format('TRUNCATE TABLE %s', current_table);
+
+        RAISE NOTICE '>> Inserting data into: %', current_table;
+        COPY bronze.erp_ust_az12
+        FROM 'C:\Users\Public\Documents\SQL projects\sql-data-warehouse-project\datasets\source_erp\CUST_AZ12.csv'
+        WITH(
+            FORMAT CSV, 
+            DELIMITER ',', 
+            HEADER
+        );
+        end_time := clock_timestamp();
+        duration := end_time - start_time;
+        RAISE NOTICE 'successfully loaded %', current_table;
+        RAISE NOTICE 'Load duration: %', duration;
+        RAISE NOTICE '------------------------------------------------';
+        RAISE NOTICE '------------------------------------------------';
+
+        batch_end_time := clock_timestamp();
+        duration := batch_end_time - batch_start_time;
+        RAISE NOTICE 'Load duration: %', duration;
+
+    EXCEPTION
+    -- Error handler begins
+        WHEN OTHERS THEN
+            RAISE NOTICE 'bronze layer load failed';
+            RAISE NOTICE 'Failed table: %', current_table;
+            RAISE NOTICE 'Error code: %', SQLSTATE;
+            RAISE NOTICE 'Error message: %', SQLERRM;
+    RAISE;    
+    END
+$body$;
